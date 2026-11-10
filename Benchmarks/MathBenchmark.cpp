@@ -1,5 +1,6 @@
 #include <Helix/Math/Geometry.h>
 #include <Helix/Math/Random.h>
+#include <Helix/Jobs/Jobs.h>
 #include <Helix/Testing/Bench.h>
 
 using namespace helix;
@@ -40,6 +41,19 @@ HX_BENCH(CullBoundsSoA_100k)
         CullBoundsSoA(planes, {cx, cy, cz, ex, ey, ez, kCount}, visible);
         DoNotOptimize(visible[kCount / 2]);
     }
+}
+
+HX_BENCH(CullBoundsSoAParallel_100k)
+{
+    Setup();
+    jobs::Initialize();
+    state.SetItemsPerIteration(kCount);
+    while (state.KeepRunning())
+    {
+        CullBoundsSoAParallel(planes, {cx, cy, cz, ex, ey, ez, kCount}, visible);
+        DoNotOptimize(visible[kCount / 2]);
+    }
+    jobs::Shutdown();
 }
 
 HX_BENCH(CullBoundsScalar_100k)

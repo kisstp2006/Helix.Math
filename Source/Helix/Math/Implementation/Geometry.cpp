@@ -1,5 +1,7 @@
 #include <Helix/Math/Geometry.h>
 #include <Helix/Math/Simd.h>
+
+#include <Helix/Jobs/Jobs.h>
 #include <cstring>
 
 namespace helix
@@ -175,5 +177,66 @@ namespace helix
             simd::Store(r, v);
             out[i] = {r[0], r[1], r[2]};
         }
+    }
+
+    namespace
+    {
+        // Batches cover whole groups of four items so every batch stays on the vector path.
+        template <typename Context>
+        void RunBatches(Context& context, usize count, u32 batchSize, jobs::JobFunction function)
+        {
+            u32 batch = Max<u32>(4, batchSize & ~3u);
+            if (!jobs::IsInitialized() || count <= batch)
+            {
+                function(&context, 0, u32(count));
+                return;
+            }
+            u32 batches = u32((count + batch - 1) / batch);
+            context.batch = batch;
+            jobs::Complete(jobs::ScheduleParallelFor(function, &context, batches, 1));
+        }
+
+        struct CullContext
+        {
+            const Plane* planes;
+            BoundsSoA bounds;
+            u8* visible;
+            u32 batch = 0;
+        };
+
+        struct TransformContext
+        {
+            const Matrix4x4* matrix;
+            const Vector3* points;
+            Vector3* out;
+            usize count;
+            u32 batch = 0;
+        };
+    }
+
+    void CullBoundsSoAParallel(const Plane planes[6], const BoundsSoA& bounds, u8* visible, u32 batchSize)
+    {
+        CullContext context{planes, bounds, visible};
+        RunBatches(context, bounds.count, batchSize, [](void* data, u32 begin, u32 end) {
+            const CullContext& c = *static_cast<const CullContext*>(data);
+            usize first = c.batch ? usize(begin) * c.batch : begin;
+            usize last = c.batch ? Min<usize>(usize(end) * c.batch, c.bounds.count) : end;
+            const BoundsSoA& b = c.bounds;
+            CullBoundsSoA(c.planes, {b.centerX + first, b.centerY + first, b.centerZ + first, b.extentX + first, b.extentY + first,
+                                     b.extentZ + first, last - first},
+                          c.visible + first);
+        });
+    }
+
+    void TransformPointsParallel(const Matrix4x4& m, Span<const Vector3> points, Span<Vector3> out, u32 batchSize)
+    {
+        HX_ASSERT(out.Size() >= points.Size());
+        TransformContext context{&m, points.Data(), out.Data(), points.Size()};
+        RunBatches(context, points.Size(), batchSize, [](void* data, u32 begin, u32 end) {
+            const TransformContext& c = *static_cast<const TransformContext*>(data);
+            usize first = c.batch ? usize(begin) * c.batch : begin;
+            usize last = c.batch ? Min<usize>(usize(end) * c.batch, c.count) : end;
+            TransformPoints(*c.matrix, Span<const Vector3>(c.points + first, last - first), Span<Vector3>(c.out + first, last - first));
+        });
     }
 }

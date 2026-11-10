@@ -24,6 +24,9 @@ numbers and a small SIMD layer.
 | `Helix/Math/Geometry.h` | `Rect`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
 | `Helix/Math/Random.h` | `Random` |
 | `Helix/Math/Simd.h` | `simd::float4` over SSE2, NEON, wasm simd128, scalar fallback |
+`CullBoundsSoAParallel` and `TransformPointsParallel` split the same work into batches on Helix.Jobs and give identical
+results; without an initialized job system they run on the calling thread.
+
 Sources live in `Source/Helix/Math/Implementation/`, tests in `Tests/`, benchmarks in `Benchmarks/`.
 
 ## Build

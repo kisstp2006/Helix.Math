@@ -1,7 +1,11 @@
 #include <Helix/Math/Color.h>
 #include <Helix/Math/Geometry.h>
 #include <Helix/Math/Random.h>
+#include <Helix/Core/Containers/Array.h>
+#include <Helix/Jobs/Jobs.h>
 #include <Helix/Testing/Test.h>
+
+#include <cstring>
 
 using namespace helix;
 
@@ -228,4 +232,47 @@ HX_TEST(Geometry, TransformPointsMatchesScalar)
     TransformPoints(m, Span<const Vector3>(points, 37), Span<Vector3>(out, 37));
     for (int i = 0; i < 37; i++)
         HX_CHECK(Near(out[i], m.MultiplyPoint3x4(points[i]), 1e-3f));
+}
+
+HX_TEST(Geometry, ParallelCullAndTransformMatchSerial)
+{
+    constexpr usize n = 50003;
+    Array<f32> soa;
+    soa.Resize(n * 6);
+    Random rng(77);
+    for (usize i = 0; i < n * 3; i++)
+        soa[i] = rng.Range(-300.0f, 300.0f);
+    for (usize i = n * 3; i < n * 6; i++)
+        soa[i] = rng.Range(0.5f, 6.0f);
+    BoundsSoA bounds{soa.Data(), soa.Data() + n, soa.Data() + 2 * n, soa.Data() + 3 * n, soa.Data() + 4 * n, soa.Data() + 5 * n, n};
+    Plane planes[6];
+    Matrix4x4 vp = Matrix4x4::Perspective(60.0f, 1.777f, 0.3f, 500.0f) * Matrix4x4::Scale(Vector3(1, 1, -1));
+    CalculateFrustumPlanes(vp, planes);
+    Array<u8> serial, parallel;
+    serial.Resize(n);
+    parallel.Resize(n);
+    Array<Vector3> points, outSerial, outParallel;
+    points.Resize(n);
+    outSerial.Resize(n);
+    outParallel.Resize(n);
+    for (usize i = 0; i < n; i++)
+        points[i] = Vector3(soa[i], soa[n + i], soa[2 * n + i]);
+    CullBoundsSoA(planes, bounds, serial.Data());
+    TransformPoints(vp, points, outSerial);
+
+    for (int pass = 0; pass < 2; pass++)
+    {
+        if (pass == 1)
+            jobs::Initialize();
+        std::memset(parallel.Data(), 2, n);
+        CullBoundsSoAParallel(planes, bounds, parallel.Data(), 1000);
+        TransformPointsParallel(vp, points, outParallel, 1000);
+        HX_CHECK(std::memcmp(serial.Data(), parallel.Data(), n) == 0);
+        HX_CHECK(std::memcmp(outSerial.Data(), outParallel.Data(), n * sizeof(Vector3)) == 0);
+    }
+    usize visible = 0;
+    for (u8 v : serial)
+        visible += v;
+    HX_CHECK(visible > 100 && visible < n);
+    jobs::Shutdown();
 }

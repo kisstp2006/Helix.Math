@@ -89,4 +89,9 @@ namespace helix
 
     void CullBoundsSoA(const Plane planes[6], const BoundsSoA& bounds, u8* visible);
     void TransformPoints(const Matrix4x4& m, Span<const Vector3> points, Span<Vector3> out);
+
+    // Same results split over the job system in batches; they run on the calling thread when the job system is not
+    // initialized or the input is small. Both return after the work is complete.
+    void CullBoundsSoAParallel(const Plane planes[6], const BoundsSoA& bounds, u8* visible, u32 batchSize = 4096);
+    void TransformPointsParallel(const Matrix4x4& m, Span<const Vector3> points, Span<Vector3> out, u32 batchSize = 4096);
 }
