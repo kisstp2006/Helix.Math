@@ -1,5 +1,6 @@
 #include <Helix/Math/Geometry.h>
 #include <Helix/Math/Simd.h>
+#include <cstring>
 
 namespace helix
 {
@@ -117,6 +118,22 @@ namespace helix
 
     void CullBoundsSoA(const Plane planes[6], const BoundsSoA& s, u8* visible)
     {
+        // Plane constants are expanded once; the loop body is then pure multiply-add work.
+        simd::float4 nx[6], ny[6], nz[6], nd[6], ax[6], ay[6], az[6];
+        for (int p = 0; p < 6; p++)
+        {
+            const Plane& pl = planes[p];
+            nx[p] = simd::Splat(pl.normal.x);
+            ny[p] = simd::Splat(pl.normal.y);
+            nz[p] = simd::Splat(pl.normal.z);
+            nd[p] = simd::Splat(pl.distance);
+            ax[p] = simd::Splat(Abs(pl.normal.x));
+            ay[p] = simd::Splat(Abs(pl.normal.y));
+            az[p] = simd::Splat(Abs(pl.normal.z));
+        }
+        const simd::float4 zero = simd::Splat(0.0f);
+        static constexpr u32 kVisible[16] = {0x01010101, 0x01010100, 0x01010001, 0x01010000, 0x01000101, 0x01000100, 0x01000001, 0x01000000,
+                                             0x00010101, 0x00010100, 0x00010001, 0x00010000, 0x00000101, 0x00000100, 0x00000001, 0x00000000};
         usize i = 0;
         for (; i + 4 <= s.count; i += 4)
         {
@@ -125,17 +142,15 @@ namespace helix
             int outside = 0;
             for (int p = 0; p < 6; p++)
             {
-                const Plane& pl = planes[p];
-                simd::float4 d = simd::MulAdd(cx, simd::Splat(pl.normal.x), simd::Splat(pl.distance));
-                d = simd::MulAdd(cy, simd::Splat(pl.normal.y), d);
-                d = simd::MulAdd(cz, simd::Splat(pl.normal.z), d);
-                simd::float4 r = simd::Mul(ex, simd::Splat(Abs(pl.normal.x)));
-                r = simd::MulAdd(ey, simd::Splat(Abs(pl.normal.y)), r);
-                r = simd::MulAdd(ez, simd::Splat(Abs(pl.normal.z)), r);
-                outside |= simd::MoveMask(simd::Less(simd::Add(d, r), simd::Splat(0.0f)));
+                simd::float4 d = simd::MulAdd(cx, nx[p], nd[p]);
+                d = simd::MulAdd(cy, ny[p], d);
+                d = simd::MulAdd(cz, nz[p], d);
+                simd::float4 r = simd::Mul(ex, ax[p]);
+                r = simd::MulAdd(ey, ay[p], r);
+                r = simd::MulAdd(ez, az[p], r);
+                outside |= simd::MoveMask(simd::Less(simd::Add(d, r), zero));
             }
-            for (int k = 0; k < 4; k++)
-                visible[i + usize(k)] = u8(((outside >> k) & 1) == 0);
+            std::memcpy(visible + i, &kVisible[outside & 15], 4);
         }
         for (; i < s.count; i++)
         {
