@@ -1,4 +1,4 @@
-#include <helix/math/mathf.h>
+#include <Helix/Math/Mathf.h>
 
 namespace helix::mathf
 {

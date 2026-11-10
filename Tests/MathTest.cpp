@@ -1,7 +1,7 @@
-#include <helix/math/color.h>
-#include <helix/math/geometry.h>
-#include <helix/math/random.h>
-#include <helix/testing/test.h>
+#include <Helix/Math/Color.h>
+#include <Helix/Math/Geometry.h>
+#include <Helix/Math/Random.h>
+#include <Helix/Testing/Test.h>
 
 using namespace helix;
 

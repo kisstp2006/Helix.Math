@@ -1,4 +1,4 @@
-#include <helix/math/color.h>
+#include <Helix/Math/Color.h>
 
 namespace helix
 {

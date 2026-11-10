@@ -1,7 +1,7 @@
 #pragma once
 
-#include <helix/core/base/platform.h>
-#include <helix/core/base/types.h>
+#include <Helix/Core/Basics/Platform.h>
+#include <Helix/Core/Basics/Types.h>
 
 #if defined(__wasm_simd128__)
 #include <wasm_simd128.h>

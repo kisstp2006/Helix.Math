@@ -1,5 +1,5 @@
-#include <helix/math/geometry.h>
-#include <helix/math/simd.h>
+#include <Helix/Math/Geometry.h>
+#include <Helix/Math/Simd.h>
 
 namespace helix
 {

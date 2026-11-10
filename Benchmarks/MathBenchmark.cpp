@@ -1,6 +1,6 @@
-#include <helix/math/geometry.h>
-#include <helix/math/random.h>
-#include <helix/testing/bench.h>
+#include <Helix/Math/Geometry.h>
+#include <Helix/Math/Random.h>
+#include <Helix/Testing/Bench.h>
 
 using namespace helix;
 using helix::testing::DoNotOptimize;

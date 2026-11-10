@@ -1,4 +1,4 @@
-#include <helix/math/random.h>
+#include <Helix/Math/Random.h>
 
 namespace helix
 {

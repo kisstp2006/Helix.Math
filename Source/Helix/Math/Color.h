@@ -1,6 +1,6 @@
 #pragma once
 
-#include <helix/math/vector.h>
+#include <Helix/Math/Vector.h>
 
 namespace helix
 {

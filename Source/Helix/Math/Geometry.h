@@ -1,7 +1,7 @@
 #pragma once
 
-#include <helix/core/base/span.h>
-#include <helix/math/matrix4x4.h>
+#include <Helix/Core/Basics/Span.h>
+#include <Helix/Math/Matrix4x4.h>
 
 namespace helix
 {

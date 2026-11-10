@@ -16,14 +16,15 @@ numbers and a small SIMD layer.
 
 | Header | Content |
 |---|---|
-| `helix/math/mathf.h` | Scalar functions (`Lerp`, `SmoothDamp`, `DeltaAngle`, `PerlinNoise`, color space conversion ...) |
-| `helix/math/vector.h` | `Vector2`, `Vector3`, `Vector4`, `Vector2Int`, `Vector3Int` |
-| `helix/math/quaternion.h` | `Quaternion` |
-| `helix/math/matrix4x4.h` | `Matrix4x4` (TRS, projections, inverse) |
-| `helix/math/color.h` | `Color`, `Color32`, HSV conversion |
-| `helix/math/geometry.h` | `Rect`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
-| `helix/math/random.h` | `Random` |
-| `helix/math/simd.h` | `simd::float4` over SSE2, NEON, wasm simd128, scalar fallback |
+| `Helix/Math/Mathf.h` | Scalar functions (`Lerp`, `SmoothDamp`, `DeltaAngle`, `PerlinNoise`, color space conversion ...) |
+| `Helix/Math/Vector.h` | `Vector2`, `Vector3`, `Vector4`, `Vector2Int`, `Vector3Int` |
+| `Helix/Math/Quaternion.h` | `Quaternion` |
+| `Helix/Math/Matrix4x4.h` | `Matrix4x4` (TRS, projections, inverse) |
+| `Helix/Math/Color.h` | `Color`, `Color32`, HSV conversion |
+| `Helix/Math/Geometry.h` | `Rect`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
+| `Helix/Math/Random.h` | `Random` |
+| `Helix/Math/Simd.h` | `simd::float4` over SSE2, NEON, wasm simd128, scalar fallback |
+Sources live in `Source/Helix/Math/Implementation/`, tests in `Tests/`, benchmarks in `Benchmarks/`.
 
 ## Build
 

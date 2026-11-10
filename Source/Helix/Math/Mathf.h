@@ -1,6 +1,6 @@
 #pragma once
 
-#include <helix/core/base/types.h>
+#include <Helix/Core/Basics/Types.h>
 
 #include <cmath>
 #include <limits>

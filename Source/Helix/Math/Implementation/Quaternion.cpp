@@ -1,4 +1,4 @@
-#include <helix/math/quaternion.h>
+#include <Helix/Math/Quaternion.h>
 
 namespace helix
 {

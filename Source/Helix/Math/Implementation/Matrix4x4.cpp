@@ -1,5 +1,5 @@
-#include <helix/math/matrix4x4.h>
-#include <helix/math/simd.h>
+#include <Helix/Math/Matrix4x4.h>
+#include <Helix/Math/Simd.h>
 
 namespace helix
 {
