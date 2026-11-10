@@ -32,7 +32,8 @@ Sources live in `Source/Helix/Math/Implementation/`, tests in `Tests/`, benchmar
 ## Build
 
 ```
-git clone --recursive https://github.com/kisstp2006/Helix.Math
+git clone https://github.com/kisstp2006/Helix.Math
+git -C Helix.Math submodule update --init
 cmake --preset windows-release
 cmake --build --preset windows-release
 ctest --preset windows-release
