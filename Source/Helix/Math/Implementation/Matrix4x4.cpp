@@ -65,7 +65,7 @@ namespace helix
         inv[15] = m[0] * m[5] * m[10] - m[0] * m[6] * m[9] - m[4] * m[1] * m[10] + m[4] * m[2] * m[9] + m[8] * m[1] * m[6] - m[8] * m[2] * m[5];
         f32 det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
         if (det == 0.0f)
-            return zero();
+            return zero;
         f32 s = 1.0f / det;
         Matrix4x4 r;
         for (int i = 0; i < 16; i++)
@@ -86,7 +86,7 @@ namespace helix
 
     Matrix4x4 Matrix4x4::Translate(Vector3 v)
     {
-        Matrix4x4 m = identity();
+        Matrix4x4 m = identity;
         m.m03 = v.x;
         m.m13 = v.y;
         m.m23 = v.z;
@@ -155,7 +155,7 @@ namespace helix
 
     Matrix4x4 Matrix4x4::Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar)
     {
-        Matrix4x4 m = identity();
+        Matrix4x4 m = identity;
         m.m00 = 2.0f / (right - left);
         m.m11 = 2.0f / (top - bottom);
         m.m22 = -2.0f / (zFar - zNear);
@@ -180,7 +180,7 @@ namespace helix
 
     Matrix4x4 Matrix4x4::LookAt(Vector3 from, Vector3 to, Vector3 up)
     {
-        return TRS(from, Quaternion::LookRotation(to - from, up), Vector3::one());
+        return TRS(from, Quaternion::LookRotation(to - from, up), Vector3::one);
     }
 
     Matrix4x4 Matrix4x4::operator*(const Matrix4x4& b) const
@@ -227,6 +227,74 @@ namespace helix
         for (int i = 0; i < 4; i++)
             if (!(GetColumn(i) == o.GetColumn(i)))
                 return false;
+        return true;
+    }
+
+    bool Matrix4x4::isIdentity() const { return *this == identity; }
+
+    // Of a perspective matrix (m32 is -1) or an orthographic one (m33 is 1), at the near plane.
+    FrustumPlanes Matrix4x4::decomposeProjection() const
+    {
+        FrustumPlanes fp;
+        if (m33 == 0.0f && m32 != 0.0f)
+        {
+            fp.zNear = m23 / (m22 - 1.0f);
+            fp.zFar = m23 / (m22 + 1.0f);
+            fp.left = fp.zNear * (m02 - 1.0f) / m00;
+            fp.right = fp.zNear * (m02 + 1.0f) / m00;
+            fp.bottom = fp.zNear * (m12 - 1.0f) / m11;
+            fp.top = fp.zNear * (m12 + 1.0f) / m11;
+        }
+        else
+        {
+            fp.zNear = (m23 + 1.0f) / m22;
+            fp.zFar = (m23 - 1.0f) / m22;
+            fp.left = -(1.0f + m03) / m00;
+            fp.right = (1.0f - m03) / m00;
+            fp.bottom = -(1.0f + m13) / m11;
+            fp.top = (1.0f - m13) / m11;
+        }
+        return fp;
+    }
+
+    // A translation, rotation and scale: the last row is (0, 0, 0, 1) and the scaled axes are orthogonal.
+    bool Matrix4x4::ValidTRS() const
+    {
+        if (m30 != 0.0f || m31 != 0.0f || m32 != 0.0f || m33 != 1.0f)
+            return false;
+        Vector3 x(m00, m10, m20), y(m01, m11, m21), z(m02, m12, m22);
+        f32 sx = x.magnitude(), sy = y.magnitude(), sz = z.magnitude();
+        if (sx == 0.0f || sy == 0.0f || sz == 0.0f)
+            return false;
+        constexpr f32 tolerance = 1e-4f;
+        return Abs(Vector3::Dot(x / sx, y / sy)) < tolerance && Abs(Vector3::Dot(x / sx, z / sz)) < tolerance &&
+               Abs(Vector3::Dot(y / sy, z / sz)) < tolerance;
+    }
+
+    bool Matrix4x4::Inverse3DAffine(const Matrix4x4& input, Matrix4x4& result)
+    {
+        const Matrix4x4& m = input;
+        f32 det = m.m00 * (m.m11 * m.m22 - m.m12 * m.m21) - m.m01 * (m.m10 * m.m22 - m.m12 * m.m20) + m.m02 * (m.m10 * m.m21 - m.m11 * m.m20);
+        if (det == 0.0f)
+        {
+            result = zero;
+            return false;
+        }
+        f32 s = 1.0f / det;
+        Matrix4x4 r = identity;
+        r.m00 = (m.m11 * m.m22 - m.m12 * m.m21) * s;
+        r.m01 = (m.m02 * m.m21 - m.m01 * m.m22) * s;
+        r.m02 = (m.m01 * m.m12 - m.m02 * m.m11) * s;
+        r.m10 = (m.m12 * m.m20 - m.m10 * m.m22) * s;
+        r.m11 = (m.m00 * m.m22 - m.m02 * m.m20) * s;
+        r.m12 = (m.m02 * m.m10 - m.m00 * m.m12) * s;
+        r.m20 = (m.m10 * m.m21 - m.m11 * m.m20) * s;
+        r.m21 = (m.m01 * m.m20 - m.m00 * m.m21) * s;
+        r.m22 = (m.m00 * m.m11 - m.m01 * m.m10) * s;
+        r.m03 = -(r.m00 * m.m03 + r.m01 * m.m13 + r.m02 * m.m23);
+        r.m13 = -(r.m10 * m.m03 + r.m11 * m.m13 + r.m12 * m.m23);
+        r.m23 = -(r.m20 * m.m03 + r.m21 * m.m13 + r.m22 * m.m23);
+        result = r;
         return true;
     }
 }

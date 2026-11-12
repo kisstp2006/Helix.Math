@@ -46,7 +46,7 @@ namespace helix
 
     Quaternion Quaternion::Euler(f32 ex, f32 ey, f32 ez)
     {
-        return AngleAxis(ey, Vector3::up()) * AngleAxis(ex, Vector3::right()) * AngleAxis(ez, Vector3::forward());
+        return AngleAxis(ey, Vector3::up) * AngleAxis(ex, Vector3::right) * AngleAxis(ez, Vector3::forward);
     }
 
     Vector3 Quaternion::eulerAngles() const
@@ -79,7 +79,7 @@ namespace helix
     {
         Vector3 n = Vector3::Normalize(axis);
         if (n.sqrMagnitude() == 0.0f)
-            return identity();
+            return identity;
         f32 half = degrees * Deg2Rad * 0.5f;
         f32 s = Sin(half);
         return {n.x * s, n.y * s, n.z * s, Cos(half)};
@@ -92,17 +92,17 @@ namespace helix
             q = {-q.x, -q.y, -q.z, -q.w};
         degrees = 2.0f * Acos(Clamp(q.w, -1.0f, 1.0f)) * Rad2Deg;
         f32 s = mathf::Sqrt(mathf::Max(0.0f, 1.0f - q.w * q.w));
-        axis = s > 1e-6f ? Vector3(q.x / s, q.y / s, q.z / s) : Vector3::right();
+        axis = s > 1e-6f ? Vector3(q.x / s, q.y / s, q.z / s) : Vector3::right;
     }
 
     Quaternion Quaternion::LookRotation(Vector3 forward, Vector3 up)
     {
         Vector3 f = Vector3::Normalize(forward);
         if (f.sqrMagnitude() == 0.0f)
-            return identity();
+            return identity;
         Vector3 r = Vector3::Cross(up, f);
         if (r.sqrMagnitude() < 1e-12f)
-            r = Vector3::Cross(Abs(f.y) < 0.99f ? Vector3::up() : Vector3::forward(), f);
+            r = Vector3::Cross(Abs(f.y) < 0.99f ? Vector3::up : Vector3::forward, f);
         r = Vector3::Normalize(r);
         Vector3 u = Vector3::Cross(f, r);
         return FromBasis(r, u, f);
@@ -113,12 +113,12 @@ namespace helix
         Vector3 a = Vector3::Normalize(from), b = Vector3::Normalize(to);
         f32 dot = Vector3::Dot(a, b);
         if (dot >= 1.0f - 1e-6f)
-            return identity();
+            return identity;
         if (dot <= -1.0f + 1e-6f)
         {
-            Vector3 axis = Vector3::Cross(Vector3::right(), a);
+            Vector3 axis = Vector3::Cross(Vector3::right, a);
             if (axis.sqrMagnitude() < 1e-12f)
-                axis = Vector3::Cross(Vector3::up(), a);
+                axis = Vector3::Cross(Vector3::up, a);
             return AngleAxis(180.0f, axis);
         }
         Vector3 c = Vector3::Cross(a, b);
@@ -129,7 +129,7 @@ namespace helix
     {
         f32 m = mathf::Sqrt(Dot(q, q));
         if (m < Epsilon)
-            return identity();
+            return identity;
         return {q.x / m, q.y / m, q.z / m, q.w / m};
     }
 

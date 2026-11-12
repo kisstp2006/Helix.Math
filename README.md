@@ -10,7 +10,13 @@ numbers and a small SIMD layer.
 - `Quaternion::Euler(x, y, z)` rotates around Z, then X, then Y; `eulerAngles` returns degrees in 0..360.
 - Vector and quaternion equality is approximate (`1e-5` distance, `1 - 1e-6` dot).
 - `mathf::Round` rounds half to even, `mathf::Sign(0)` is 1.
-- `Random` is a xorshift128 generator; `value` and the float `Range` include both ends, the integer `Range` excludes the max.
+- The value types have the script API's shape: fields, static properties as static constants (`Vector3::zero`,
+  `Quaternion::identity`, the named `Color`s), instance properties as member functions (`magnitude()`,
+  `normalized()`), the methods and static methods by the reference's names; they are tagged for Helix.Bindgen
+  (`HX_STRUCT`, `HX_FIELD`), so the C# structs have the same layout.
+- `Random` is the engine's static generator (`InitState`, `state`, `value`, `Range`, `ColorHSV`, ...);
+  `RandomGenerator` is the xorshift128 generator behind it for code that keeps its own. `value` and the float `Range`
+  include both ends, the integer `Range` excludes the max (swapped bounds keep their kind).
 
 ## Layout
 
@@ -19,10 +25,10 @@ numbers and a small SIMD layer.
 | `Helix/Math/Mathf.h` | Scalar functions (`Lerp`, `SmoothDamp`, `DeltaAngle`, `PerlinNoise`, color space conversion ...) |
 | `Helix/Math/Vector.h` | `Vector2`, `Vector3`, `Vector4`, `Vector2Int`, `Vector3Int` |
 | `Helix/Math/Quaternion.h` | `Quaternion` |
-| `Helix/Math/Matrix4x4.h` | `Matrix4x4` (TRS, projections, inverse) |
+| `Helix/Math/Matrix4x4.h` | `Matrix4x4` (TRS, projections, inverse), `FrustumPlanes` |
 | `Helix/Math/Color.h` | `Color`, `Color32`, HSV conversion |
 | `Helix/Math/Geometry.h` | `Rect`, `RectInt`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
-| `Helix/Math/Random.h` | `Random` |
+| `Helix/Math/Random.h` | `Random`, `RandomGenerator` |
 | `Helix/Math/Simd.h` | `simd::float4` over SSE2, NEON, wasm simd128, scalar fallback |
 `CullBoundsSoAParallel` and `TransformPointsParallel` split the same work into batches on Helix.Jobs and give identical
 results; without an initialized job system they run on the calling thread.

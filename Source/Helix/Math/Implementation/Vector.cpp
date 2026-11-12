@@ -4,10 +4,18 @@ namespace helix
 {
     using namespace mathf;
 
-    Vector2 Vector2::normalized() const
+    Vector2 Vector2::Normalize(Vector2 v)
     {
-        f32 m = magnitude();
-        return m > kEpsilon ? *this / m : zero();
+        f32 m = v.magnitude();
+        return m > kEpsilon ? v / m : zero;
+    }
+
+    Vector2 Vector2::SmoothDamp(Vector2 current, Vector2 target, Vector2& currentVelocity, f32 smoothTime, f32 maxSpeed, f32 deltaTime)
+    {
+        Vector3 velocity = currentVelocity;
+        Vector3 result = Vector3::SmoothDamp(current, target, velocity, smoothTime, maxSpeed, deltaTime);
+        currentVelocity = Vector2(velocity);
+        return Vector2(result);
     }
 
     f32 Vector2::Distance(Vector2 a, Vector2 b) { return (a - b).magnitude(); }
@@ -48,7 +56,7 @@ namespace helix
     Vector3 Vector3::Normalize(Vector3 v)
     {
         f32 m = v.magnitude();
-        return m > kEpsilon ? v / m : zero();
+        return m > kEpsilon ? v / m : zero;
     }
 
     f32 Vector3::Distance(Vector3 a, Vector3 b) { return (a - b).magnitude(); }
@@ -88,7 +96,7 @@ namespace helix
     {
         f32 sq = Dot(normal, normal);
         if (sq < Epsilon)
-            return zero();
+            return zero;
         return normal * (Dot(v, normal) / sq);
     }
 
@@ -101,14 +109,23 @@ namespace helix
         tangent = Normalize(tangent - Project(tangent, normal));
         if (tangent.sqrMagnitude() == 0.0f)
         {
-            Vector3 axis = Abs(normal.x) < 0.9f ? right() : up();
+            Vector3 axis = Abs(normal.x) < 0.9f ? right : up;
             tangent = Normalize(Cross(normal, axis));
         }
     }
 
-    Vector3 Vector3::Slerp(Vector3 a, Vector3 b, f32 t)
+    void Vector3::OrthoNormalize(Vector3& normal, Vector3& tangent, Vector3& binormal)
     {
-        t = Clamp01(t);
+        OrthoNormalize(normal, tangent);
+        binormal = Normalize(binormal - Project(binormal, normal) - Project(binormal, tangent));
+        if (binormal.sqrMagnitude() == 0.0f)
+            binormal = Cross(normal, tangent);
+    }
+
+    Vector3 Vector3::Slerp(Vector3 a, Vector3 b, f32 t) { return SlerpUnclamped(a, b, Clamp01(t)); }
+
+    Vector3 Vector3::SlerpUnclamped(Vector3 a, Vector3 b, f32 t)
+    {
         f32 ma = a.magnitude(), mb = b.magnitude();
         if (ma < kEpsilon || mb < kEpsilon)
             return LerpUnclamped(a, b, t);
@@ -121,7 +138,7 @@ namespace helix
             if (dot > 0.0f)
                 return LerpUnclamped(a, b, t);
             Vector3 n = na;
-            rel = Abs(na.x) < 0.9f ? right() : up();
+            rel = Abs(na.x) < 0.9f ? right : up;
             OrthoNormalize(n, rel);
         }
         else
@@ -162,11 +179,24 @@ namespace helix
         return output;
     }
 
-    Vector4 Vector4::normalized() const
+    Vector4 Vector4::Normalize(Vector4 a)
     {
-        f32 m = magnitude();
-        return m > kEpsilon ? *this / m : zero();
+        f32 m = a.magnitude();
+        return m > kEpsilon ? a / m : zero;
     }
+
+    f32 Vector4::Distance(Vector4 a, Vector4 b) { return (a - b).magnitude(); }
+
+    Vector4 Vector4::MoveTowards(Vector4 current, Vector4 target, f32 maxDistanceDelta)
+    {
+        Vector4 d = target - current;
+        f32 sq = d.sqrMagnitude();
+        if (sq == 0.0f || (maxDistanceDelta >= 0.0f && sq <= maxDistanceDelta * maxDistanceDelta))
+            return target;
+        return current + d / mathf::Sqrt(sq) * maxDistanceDelta;
+    }
+
+    Vector4 Vector4::Project(Vector4 a, Vector4 b) { return b * (Dot(a, b) / Dot(b, b)); }
 
     Vector4 Vector4::Lerp(Vector4 a, Vector4 b, f32 t)
     {

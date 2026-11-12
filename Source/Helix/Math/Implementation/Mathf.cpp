@@ -1,5 +1,7 @@
 #include <Helix/Math/Mathf.h>
 
+#include <bit>
+
 namespace helix::mathf
 {
     f32 SmoothDamp(f32 current, f32 target, f32& velocity, f32 smoothTime, f32 maxSpeed, f32 deltaTime)
@@ -116,5 +118,64 @@ namespace helix::mathf
         f32 x1 = LerpUnclamped(Grad(aa, xf, yf), Grad(ba, xf - 1.0f, yf), u);
         f32 x2 = LerpUnclamped(Grad(ab, xf, yf - 1.0f), Grad(bb, xf - 1.0f, yf - 1.0f), u);
         return Clamp01((LerpUnclamped(x1, x2, v) + 1.0f) * 0.5f);
+    }
+
+    f32 PerlinNoise1D(f32 x)
+    {
+        int xi = int(Floor(x));
+        f32 xf = x - Floor(x);
+        f32 g0 = (Perm(xi) & 1) ? xf : -xf;
+        f32 g1 = (Perm(xi + 1) & 1) ? xf - 1.0f : 1.0f - xf;
+        return Clamp01(LerpUnclamped(g0, g1, Fade(xf)) + 0.5f);
+    }
+
+    u16 FloatToHalf(f32 value)
+    {
+        u32 bits = std::bit_cast<u32>(value);
+        u32 sign = (bits >> 16) & 0x8000u;
+        u32 exponent = (bits >> 23) & 0xFFu;
+        u32 mantissa = bits & 0x7FFFFFu;
+        if (exponent == 0xFFu)
+            return u16(sign | 0x7C00u | (mantissa ? 0x200u : 0u));
+        i32 e = i32(exponent) - 127 + 15;
+        if (e >= 31)
+            return u16(sign | 0x7C00u);
+        if (e <= 0)
+        {
+            if (e < -10)
+                return u16(sign);
+            mantissa |= 0x800000u;
+            u32 shift = u32(14 - e);
+            u32 half = mantissa >> shift;
+            u32 rest = mantissa & ((1u << shift) - 1u), mid = 1u << (shift - 1);
+            if (rest > mid || (rest == mid && (half & 1u)))
+                half++;
+            return u16(sign | half);
+        }
+        u32 half = sign | (u32(e) << 10) | (mantissa >> 13);
+        u32 rest = mantissa & 0x1FFFu;
+        if (rest > 0x1000u || (rest == 0x1000u && (half & 1u)))
+            half++;
+        return u16(half);
+    }
+
+    f32 HalfToFloat(u16 value)
+    {
+        u32 sign = u32(value & 0x8000u) << 16;
+        i32 exponent = (value >> 10) & 0x1F;
+        u32 mantissa = value & 0x3FFu;
+        if (exponent == 0)
+        {
+            if (mantissa == 0)
+                return std::bit_cast<f32>(sign);
+            // Subnormal: normalize.
+            exponent = 1;
+            while ((mantissa & 0x400u) == 0)
+                mantissa <<= 1, exponent--;
+            mantissa &= 0x3FFu;
+        }
+        else if (exponent == 31)
+            return std::bit_cast<f32>(sign | 0x7F800000u | (mantissa << 13));
+        return std::bit_cast<f32>(sign | (u32(exponent + 112) << 23) | (mantissa << 13));
     }
 }

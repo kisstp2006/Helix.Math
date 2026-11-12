@@ -60,4 +60,18 @@ namespace helix
             c = {Clamp01(c.r), Clamp01(c.g), Clamp01(c.b), 1};
         return c;
     }
+
+    Color mathf::CorrelatedColorTemperatureToRGB(f32 kelvin)
+    {
+        // A fit of the black body curve (sRGB 0..255 by the temperature in hundreds of Kelvin), to linear, the
+        // largest component 1.
+        f32 t = Clamp(kelvin, 1000.0f, 40000.0f) / 100.0f;
+        f32 red = t <= 66.0f ? 255.0f : 329.698727446f * Pow(t - 60.0f, -0.1332047592f);
+        f32 green = t <= 66.0f ? 99.4708025861f * Log(t) - 161.1195681661f : 288.1221695283f * Pow(t - 60.0f, -0.0755148492f);
+        f32 blue = t >= 66.0f ? 255.0f : t <= 19.0f ? 0.0f : 138.5177312231f * Log(t - 10.0f) - 305.0447927307f;
+        Color c(GammaToLinearSpace(Clamp(red, 0.0f, 255.0f) / 255.0f), GammaToLinearSpace(Clamp(green, 0.0f, 255.0f) / 255.0f),
+                GammaToLinearSpace(Clamp(blue, 0.0f, 255.0f) / 255.0f), 1.0f);
+        f32 m = c.maxColorComponent();
+        return m > 0.0f ? Color(c.r / m, c.g / m, c.b / m, 1.0f) : c;
+    }
 }

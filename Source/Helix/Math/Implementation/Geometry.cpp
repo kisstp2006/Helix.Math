@@ -10,9 +10,66 @@ namespace helix
 
     bool Rect::Contains(Vector2 p) const { return p.x >= xMin() && p.x < xMax() && p.y >= yMin() && p.y < yMax(); }
 
+    bool Rect::Contains(Vector3 point, bool allowInverse) const
+    {
+        if (!allowInverse)
+            return Contains(point);
+        bool inX = (width < 0.0f && point.x <= x && point.x > x + width) || (width >= 0.0f && point.x >= x && point.x < x + width);
+        bool inY = (height < 0.0f && point.y <= y && point.y > y + height) || (height >= 0.0f && point.y >= y && point.y < y + height);
+        return inX && inY;
+    }
+
     bool Rect::Overlaps(const Rect& o) const
     {
         return o.xMax() > xMin() && o.xMin() < xMax() && o.yMax() > yMin() && o.yMin() < yMax();
+    }
+
+    bool Rect::Overlaps(const Rect& other, bool allowInverse) const
+    {
+        if (!allowInverse)
+            return Overlaps(other);
+        auto ordered = [](Rect r) {
+            if (r.width < 0.0f)
+                r.x += r.width, r.width = -r.width;
+            if (r.height < 0.0f)
+                r.y += r.height, r.height = -r.height;
+            return r;
+        };
+        return ordered(*this).Overlaps(ordered(other));
+    }
+
+    Vector2 Rect::NormalizedToPoint(const Rect& r, Vector2 n)
+    {
+        return {mathf::Lerp(r.x, r.xMax(), n.x), mathf::Lerp(r.y, r.yMax(), n.y)};
+    }
+
+    Vector2 Rect::PointToNormalized(const Rect& r, Vector2 p)
+    {
+        return {InverseLerp(r.x, r.xMax(), p.x), InverseLerp(r.y, r.yMax(), p.y)};
+    }
+
+    void RectInt::ClampToBounds(const RectInt& bounds)
+    {
+        Vector2Int mn(mathf::Max(mathf::Min(bounds.xMax(), xMin()), bounds.xMin()), mathf::Max(mathf::Min(bounds.yMax(), yMin()), bounds.yMin()));
+        Vector2Int mx(mathf::Min(mathf::Max(bounds.xMin(), xMax()), bounds.xMax()), mathf::Min(mathf::Max(bounds.yMin(), yMax()), bounds.yMax()));
+        x = mn.x, y = mn.y, width = mx.x - mn.x, height = mx.y - mn.y;
+    }
+
+    bool Bounds::IntersectRay(const Ray& ray) const
+    {
+        f32 distance = 0;
+        return helix::IntersectRay(*this, ray, distance);
+    }
+
+    bool Bounds::IntersectRay(const Ray& ray, f32& distance) const { return helix::IntersectRay(*this, ray, distance); }
+
+    Plane Matrix4x4::TransformPlane(const Plane& plane) const
+    {
+        // The plane's point and normal through the matrix (the normal by the inverse transpose).
+        Matrix4x4 it = inverse().transpose();
+        Vector3 point = MultiplyPoint3x4(plane.normal * -plane.distance);
+        Vector3 n = it.MultiplyVector(plane.normal);
+        return Plane(n, point);
     }
 
     void Bounds::SetMinMax(Vector3 mn, Vector3 mx)

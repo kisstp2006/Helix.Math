@@ -4,27 +4,37 @@
 
 namespace helix
 {
+    // == compares approximately (dot above 1 - 1e-6), Equals exactly. A default Quaternion is the identity.
+    HX_STRUCT(Namespace = "HelixEngine")
     struct Quaternion
     {
-        f32 x = 0, y = 0, z = 0, w = 1;
+        HX_FIELD() f32 x = 0;
+        HX_FIELD() f32 y = 0;
+        HX_FIELD() f32 z = 0;
+        HX_FIELD() f32 w = 1;
 
         static constexpr f32 kEpsilon = 1e-6f;
+        static const Quaternion identity;
 
         constexpr Quaternion() = default;
         constexpr Quaternion(f32 x0, f32 y0, f32 z0, f32 w0) : x(x0), y(y0), z(z0), w(w0) {}
-
-        static constexpr Quaternion identity() { return {0, 0, 0, 1}; }
 
         f32& operator[](int i) { return (&x)[i]; }
         f32 operator[](int i) const { return (&x)[i]; }
 
         Vector3 eulerAngles() const;
+        void SetEulerAngles(Vector3 euler) { *this = Euler(euler); }
         Quaternion normalized() const { return Normalize(*this); }
+        void Normalize() { *this = Normalize(*this); }
+        void Set(f32 newX, f32 newY, f32 newZ, f32 newW) { x = newX, y = newY, z = newZ, w = newW; }
+        void SetFromToRotation(Vector3 fromDirection, Vector3 toDirection) { *this = FromToRotation(fromDirection, toDirection); }
+        void SetLookRotation(Vector3 view, Vector3 up = Vector3::up) { *this = LookRotation(view, up); }
+        constexpr bool Equals(Quaternion o) const { return x == o.x && y == o.y && z == o.z && w == o.w; }
 
         static Quaternion Euler(f32 ex, f32 ey, f32 ez);
         static Quaternion Euler(Vector3 degrees) { return Euler(degrees.x, degrees.y, degrees.z); }
         static Quaternion AngleAxis(f32 degrees, Vector3 axis);
-        static Quaternion LookRotation(Vector3 forward, Vector3 up = Vector3::up());
+        static Quaternion LookRotation(Vector3 forward, Vector3 upwards = Vector3::up);
         static Quaternion FromToRotation(Vector3 from, Vector3 to);
         static Quaternion Inverse(Quaternion q) { return {-q.x, -q.y, -q.z, q.w}; }
         static Quaternion Normalize(Quaternion q);
@@ -57,4 +67,6 @@ namespace helix
 
         constexpr bool operator==(Quaternion o) const { return Dot(*this, o) > 1.0f - kEpsilon; }
     };
+
+    inline constexpr Quaternion Quaternion::identity{0, 0, 0, 1};
 }

@@ -3,8 +3,10 @@
 #include <Helix/Core/Basics/Types.h>
 
 #include <cmath>
+#include <initializer_list>
 #include <limits>
 
+// The reference's Mathf as functions of the namespace mathf (Mathf in the script API).
 namespace helix::mathf
 {
     inline constexpr f32 PI = 3.14159274f;
@@ -15,6 +17,7 @@ namespace helix::mathf
     inline constexpr f32 NegativeInfinity = -std::numeric_limits<f32>::infinity();
 
     inline f32 Abs(f32 v) { return std::fabs(v); }
+    inline i32 Abs(i32 v) { return v < 0 ? -v : v; }
     inline f32 Sqrt(f32 v) { return std::sqrt(v); }
     inline f32 Sin(f32 v) { return std::sin(v); }
     inline f32 Cos(f32 v) { return std::cos(v); }
@@ -39,6 +42,27 @@ namespace helix::mathf
     inline f32 Max(f32 a, f32 b) { return a > b ? a : b; }
     inline i32 Min(i32 a, i32 b) { return a < b ? a : b; }
     inline i32 Max(i32 a, i32 b) { return a > b ? a : b; }
+    // C#'s params overloads: the smallest or largest value, 0 for none.
+    template <class T>
+    T Min(std::initializer_list<T> values)
+    {
+        if (values.size() == 0)
+            return T(0);
+        T m = *values.begin();
+        for (T v : values)
+            m = v < m ? v : m;
+        return m;
+    }
+    template <class T>
+    T Max(std::initializer_list<T> values)
+    {
+        if (values.size() == 0)
+            return T(0);
+        T m = *values.begin();
+        for (T v : values)
+            m = v > m ? v : m;
+        return m;
+    }
 
     inline f32 Clamp(f32 v, f32 lo, f32 hi) { return v < lo ? lo : (v > hi ? hi : v); }
     inline i32 Clamp(i32 v, i32 lo, i32 hi) { return v < lo ? lo : (v > hi ? hi : v); }
@@ -107,4 +131,8 @@ namespace helix::mathf
     f32 GammaToLinearSpace(f32 v);
     f32 LinearToGammaSpace(f32 v);
     f32 PerlinNoise(f32 x, f32 y);
+    f32 PerlinNoise1D(f32 x);
+    // IEEE half precision (round to nearest even).
+    u16 FloatToHalf(f32 value);
+    f32 HalfToFloat(u16 value);
 }

@@ -19,7 +19,7 @@ namespace
         if (done)
             return;
         done = true;
-        Random rng(1);
+        RandomGenerator rng(1);
         for (usize i = 0; i < kCount; i++)
         {
             cx[i] = rng.Range(-500.0f, 500.0f);
@@ -75,7 +75,7 @@ HX_BENCH(CullBoundsScalar_100k)
 
 HX_BENCH(MatrixMultiply)
 {
-    Matrix4x4 a = Matrix4x4::TRS(Vector3(1, 2, 3), Quaternion::Euler(10, 20, 30), Vector3::one());
+    Matrix4x4 a = Matrix4x4::TRS(Vector3(1, 2, 3), Quaternion::Euler(10, 20, 30), Vector3::one);
     Matrix4x4 b = a.inverse();
     while (state.KeepRunning())
     {
