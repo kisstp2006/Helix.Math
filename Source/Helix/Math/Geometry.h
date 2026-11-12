@@ -22,6 +22,21 @@ namespace helix
         constexpr bool operator==(const Rect&) const = default;
     };
 
+    struct RectInt
+    {
+        i32 x = 0, y = 0, width = 0, height = 0;
+
+        constexpr i32 xMin() const { return x; }
+        constexpr i32 yMin() const { return y; }
+        constexpr i32 xMax() const { return x + width; }
+        constexpr i32 yMax() const { return y + height; }
+        constexpr Vector2Int position() const { return {x, y}; }
+        constexpr Vector2Int size() const { return {width, height}; }
+        constexpr bool Contains(Vector2Int p) const { return p.x >= x && p.y >= y && p.x < x + width && p.y < y + height; }
+        constexpr bool Overlaps(const RectInt& o) const { return o.x < x + width && o.x + o.width > x && o.y < y + height && o.y + o.height > y; }
+        constexpr bool operator==(const RectInt&) const = default;
+    };
+
     struct Bounds
     {
         Vector3 center;

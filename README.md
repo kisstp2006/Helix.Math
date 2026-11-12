@@ -21,7 +21,7 @@ numbers and a small SIMD layer.
 | `Helix/Math/Quaternion.h` | `Quaternion` |
 | `Helix/Math/Matrix4x4.h` | `Matrix4x4` (TRS, projections, inverse) |
 | `Helix/Math/Color.h` | `Color`, `Color32`, HSV conversion |
-| `Helix/Math/Geometry.h` | `Rect`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
+| `Helix/Math/Geometry.h` | `Rect`, `RectInt`, `Bounds`, `Ray`, `Plane`, frustum planes, SIMD frustum culling of SoA bounds, batch point transform |
 | `Helix/Math/Random.h` | `Random` |
 | `Helix/Math/Simd.h` | `simd::float4` over SSE2, NEON, wasm simd128, scalar fallback |
 `CullBoundsSoAParallel` and `TransformPointsParallel` split the same work into batches on Helix.Jobs and give identical

@@ -276,3 +276,15 @@ HX_TEST(Geometry, ParallelCullAndTransformMatchSerial)
     HX_CHECK(visible > 100 && visible < n);
     jobs::Shutdown();
 }
+
+HX_TEST(Math, RectIntContainsAndOverlaps)
+{
+    RectInt r{10, 20, 30, 40};
+    HX_CHECK_EQ(r.xMax(), 40);
+    HX_CHECK_EQ(r.yMax(), 60);
+    HX_CHECK(r.Contains(Vector2Int{10, 20}));
+    HX_CHECK(!r.Contains(Vector2Int{40, 20}));
+    HX_CHECK(r.Overlaps(RectInt{39, 59, 5, 5}));
+    HX_CHECK(!r.Overlaps(RectInt{40, 20, 5, 5}));
+    HX_CHECK((r.size() == Vector2Int{30, 40}));
+}
